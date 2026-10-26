@@ -1,0 +1,584 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101114">
+<link rel="manifest" href="./manifest.json">
+<title>FocusGram</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: #101114; color: #f5f5f7;
+  font-family: Arial, sans-serif;
+}
+button { font: inherit; cursor: pointer; }
+.app {
+  max-width: 480px; min-height: 100vh; margin: auto;
+  padding: 22px 18px 92px;
+}
+header {
+  display: flex; align-items: center;
+  justify-content: space-between; margin-bottom: 28px;
+}
+.logo { font-size: 25px; font-weight: 800; letter-spacing: -1px; }
+.logo span { color: #b7a5ff; }
+.muted { color: #92939e; font-size: 13px; }
+.avatar {
+  width: 45px; height: 45px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: #302b48; font-size: 22px; flex-shrink: 0;
+}
+h1 { font-size: 26px; margin: 8px 0; }
+h2 { font-size: 17px; margin: 25px 0 14px; }
+.stories {
+  display: flex; gap: 16px; overflow-x: auto;
+  padding: 4px 0 10px;
+}
+.story { min-width: 58px; text-align: center; }
+.ring {
+  width: 58px; height: 58px; padding: 3px;
+  border-radius: 50%; border: 2px solid #ad91ff;
+  margin: auto auto 8px;
+}
+.ring .avatar { width: 100%; height: 100%; font-size: 23px; }
+.story small { font-size: 11px; color: #c5c5ce; }
+.panel {
+  background: #191a20; border: 1px solid #292a32;
+  border-radius: 18px; padding: 16px; margin-top: 13px;
+}
+.item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0; border-bottom: 1px solid #2b2b33;
+}
+.item:last-child { border-bottom: none; }
+.item .info { flex: 1; min-width: 0; }
+.item strong { font-size: 14px; }
+.item p { color: #999aa6; font-size: 12px; margin: 5px 0 0; }
+.pill {
+  background: #b7a5ff; color: #191322; border: 0;
+  border-radius: 12px; padding: 10px 14px; font-weight: 700;
+}
+.secondary {
+  background: #292831; color: #eee; border: 0;
+  border-radius: 10px; padding: 9px 12px;
+}
+input, textarea {
+  width: 100%; background: #25252e; color: white;
+  border: 1px solid #3a3945; border-radius: 12px;
+  padding: 13px; margin: 8px 0; font: inherit;
+}
+textarea { min-height: 90px; resize: vertical; }
+nav {
+  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 100%; max-width: 480px; padding: 10px 5px;
+  display: flex; justify-content: space-around; gap: 2px;
+  background: #18191f; border-top: 1px solid #303039;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+nav button {
+  border: 0; background: none; color: #9999a7;
+  padding: 9px 5px; font-size: 11px; border-radius: 10px;
+}
+nav button.active { color: #c4b5ff; background: #292536; }
+nav span { display: block; font-size: 19px; margin-bottom: 4px; }
+.view { display: none; }
+.view.active { display: block; }
+.notice {
+  color: #bcb0ff; font-size: 12px; line-height: 1.6;
+  background: #242132; padding: 12px; border-radius: 12px;
+}
+.empty { color: #aaaab6; font-size: 13px; line-height: 1.6; }
+
+/* Friends' Notes — Instagram-inspired layout */
+.notes-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 22px 0 14px;
+}
+.notes-heading h2 { margin: 0; }
+
+.friends-notes {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  padding: 8px 2px 16px;
+  scrollbar-width: none;
+}
+.friends-notes::-webkit-scrollbar { display: none; }
+
+.friend-note {
+  min-width: 76px;
+  width: 76px;
+  position: relative;
+  text-align: center;
+  padding-top: 36px;
+}
+.note-bubble {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 88px;
+  min-height: 32px;
+  max-height: 43px;
+  overflow: hidden;
+  padding: 7px 6px;
+  border-radius: 12px;
+  background: #292a31;
+  color: #f6f6f8;
+  font-size: 10px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  z-index: 1;
+}
+.note-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 9px;
+  height: 9px;
+  background: #292a31;
+}
+.friend-note .ring {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 8px;
+  border-color: #b6a3ff;
+}
+.friend-note .friend-name {
+  display: block;
+  font-size: 11px;
+  color: #dedee5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.note-music {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 13px;
+  background: #25232f;
+  margin-top: 10px;
+}
+.note-music .music-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #413658;
+  font-size: 20px;
+}
+.note-music .music-info { flex: 1; min-width: 0; }
+.note-music strong, .note-music small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.note-music small {
+  color: #a5a3b2;
+  font-size: 12px;
+  margin-top: 4px;
+}
+.note-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+}
+.note-tabs button {
+  flex: 1;
+  padding: 11px 5px;
+  border-radius: 11px;
+  border: 1px solid #393742;
+  background: #191a20;
+  color: #b9b8c5;
+}
+.note-tabs button.selected {
+  color: #d5caff;
+  background: #302a42;
+  border-color: #8170b5;
+}
+.note-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.note-actions .muted { font-size: 11px; }
+.own-note {
+  border: 1px solid #403752;
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div>
+      <div class="logo">focus<span>gram</span></div>
+      <div class="muted">Your people, without the noise.</div>
+    </div>
+    <div class="avatar">🌙</div>
+  </header>
+
+  <main>
+    <section class="view active" id="home">
+      <div class="muted">YOUR SPACE</div>
+      <h1>Stay connected.</h1>
+      <p class="muted">A little social. A lot more intentional.</p>
+
+      <h2>Stories <span class="muted">· Your circle</span></h2>
+      <div class="stories">
+        <div class="story">
+          <div class="ring"><div class="avatar">＋</div></div>
+          <small>Your story</small>
+        </div>
+        <div class="story">
+          <div class="ring"><div class="avatar">🌻</div></div>
+          <small>Aarav</small>
+        </div>
+        <div class="story">
+          <div class="ring"><div class="avatar">🎧</div></div>
+          <small>Riya</small>
+        </div>
+        <div class="story">
+          <div class="ring"><div class="avatar">🌊</div></div>
+          <small>Kabir</small>
+        </div>
+        <div class="story">
+          <div class="ring"><div class="avatar">🌙</div></div>
+          <small>Anaya</small>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="muted">QUICK ACCESS</div>
+        <div class="item">
+          <div class="avatar">✉️</div>
+          <div class="info"><strong>Messages</strong><p>Your conversations, all in one place.</p></div>
+          <button class="secondary" onclick="show('messages')">Open</button>
+        </div>
+        <div class="item">
+          <div class="avatar">💭</div>
+          <div class="info"><strong>Notes</strong><p>Share a thought, not a whole feed.</p></div>
+          <button class="secondary" onclick="show('notes')">Open</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 style="margin-top:0">A reminder</h2>
+        <p class="empty">You came here to connect with people, not to spend the whole evening scrolling.</p>
+      </div>
+    </section>
+
+    <section class="view" id="messages">
+      <div class="muted">YOUR CONVERSATIONS</div>
+      <h1>Messages</h1>
+      <div class="notice">Prototype only: these sample conversations aren't connected to Instagram yet.</div>
+      <div class="panel" id="chats">
+        <div class="item"><div class="avatar">🌻</div><div class="info"><strong>Aarav</strong><p>Hey, what's up?</p></div></div>
+        <div class="item"><div class="avatar">🎧</div><div class="info"><strong>Riya</strong><p>Sent you a song</p></div></div>
+        <div class="item"><div class="avatar">🌊</div><div class="info"><strong>Kabir</strong><p>See you tomorrow!</p></div></div>
+      </div>
+    </section>
+
+    
+<section class="view" id="notes">
+  <div class="muted">YOUR CIRCLE</div>
+  <h1>Notes</h1>
+  <p class="muted">Little thoughts and songs from your people.</p>
+
+  <div class="notes-heading">
+    <h2>Friends' notes</h2>
+    <span class="muted">Recent</span>
+  </div>
+
+  <div class="friends-notes">
+    <div class="friend-note">
+      <div class="note-bubble">Add a note ✨</div>
+      <div class="ring"><div class="avatar">＋</div></div>
+      <span class="friend-name">Your note</span>
+    </div>
+
+    <div class="friend-note">
+      <div class="note-bubble">♫ I LOVE THIS SONG</div>
+      <div class="ring"><div class="avatar">🌻</div></div>
+      <span class="friend-name">Aarav</span>
+    </div>
+
+    <div class="friend-note">
+      <div class="note-bubble">Out of Tune 🎧</div>
+      <div class="ring"><div class="avatar">🎧</div></div>
+      <span class="friend-name">Riya</span>
+    </div>
+
+    <div class="friend-note">
+      <div class="note-bubble">Hala Madrid 🤍</div>
+      <div class="ring"><div class="avatar">⚽</div></div>
+      <span class="friend-name">Kabir</span>
+    </div>
+
+    <div class="friend-note">
+      <div class="note-bubble">good vibes only</div>
+      <div class="ring"><div class="avatar">🌊</div></div>
+      <span class="friend-name">Anaya</span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 style="margin-top:0">Create your note</h2>
+    <div class="note-tabs">
+      <button id="textTab" class="selected" onclick="setNoteType('text')">💭 Text</button>
+      <button id="songTab" onclick="setNoteType('song')">♫ Music</button>
+    </div>
+
+    <label for="note">Your thought</label>
+    <textarea id="note" maxlength="60"
+      placeholder="What's on your mind?"></textarea>
+
+    <div id="songFields" style="display:none">
+      <label for="songTitle">Song title</label>
+      <input id="songTitle" maxlength="100"
+        placeholder="Enter a song name">
+
+      <label for="songArtist">Artist</label>
+      <input id="songArtist" maxlength="100"
+        placeholder="Enter artist name">
+      <p class="muted">Demo only: this displays song details; it does not play music.</p>
+    </div>
+
+    <div class="note-actions">
+      <span id="charCount" class="muted">0/60 characters</span>
+      <button class="pill" onclick="saveNote()">Post note</button>
+    </div>
+  </div>
+
+  <h2>Your saved notes</h2>
+  <div id="savedNotes">
+    <p class="empty">Your notes will appear here after you post them.</p>
+  </div>
+
+  <p class="notice">
+    These friends' notes are examples. Your notes are saved in this demo
+    only and are not visible to your Instagram friends.
+  </p>
+</section>
+
+
+    <section class="view" id="profile">
+      <div class="muted">YOUR SETTINGS</div>
+      <h1>Your space</h1>
+      <div class="panel">
+        <div class="avatar">🌙</div>
+        <h2>Focus mode</h2>
+        <p class="empty">A calmer way to keep up with your people.</p>
+        <div class="item"><div class="info"><strong>Reels tab</strong><p>Not included in this prototype.</p></div><span>🚫</span></div>
+        <div class="item"><div class="info"><strong>Explore feed</strong><p>Not included in this prototype.</p></div><span>🚫</span></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav>
+  <button class="active" data-page="home" onclick="show('home')"><span>⌂</span>Home</button>
+  <button data-page="messages" onclick="show('messages')"><span>✉</span>Messages</button>
+  <button data-page="notes" onclick="show('notes')"><span>✎</span>Notes</button>
+  <button data-page="profile" onclick="show('profile')"><span>◉</span>Profile</button>
+</nav>
+
+<script>
+
+const STORAGE_KEY = 'focusgram-notes-v1';
+let noteType = 'text';
+let myNotes = [];
+
+function loadNotes() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    myNotes = saved ? JSON.parse(saved) : [];
+
+    if (!Array.isArray(myNotes)) myNotes = [];
+  } catch (error) {
+    myNotes = [];
+  }
+
+  renderNotes();
+}
+
+function show(page) {
+  document.querySelectorAll('.view').forEach(view => {
+    view.classList.toggle('active', view.id === page);
+  });
+
+  document.querySelectorAll('nav button').forEach(button => {
+    button.classList.toggle('active', button.dataset.page === page);
+  });
+
+  window.scrollTo(0, 0);
+}
+
+document.getElementById('note').addEventListener('input', () => {
+  document.getElementById('charCount').textContent =
+    document.getElementById('note').value.length + '/60 characters';
+});
+
+function setNoteType(type) {
+  noteType = type;
+
+  document.getElementById('textTab').classList.toggle(
+    'selected', type === 'text'
+  );
+
+  document.getElementById('songTab').classList.toggle(
+    'selected', type === 'song'
+  );
+
+  document.getElementById('songFields').style.display =
+    type === 'song' ? 'block' : 'none';
+
+  document.getElementById('note').placeholder =
+    type === 'song'
+      ? 'Add a thought about this song...'
+      : "What's on your mind?";
+}
+
+function saveNote() {
+  const thought = document.getElementById('note').value.trim();
+  const songTitle = document.getElementById('songTitle').value.trim();
+  const songArtist = document.getElementById('songArtist').value.trim();
+
+  if (noteType === 'text' && !thought) {
+    alert('Write a note first!');
+    return;
+  }
+
+  if (noteType === 'song' && !songTitle) {
+    alert('Enter a song title first!');
+    return;
+  }
+
+  const note = {
+    id: Date.now(),
+    type: noteType,
+    thought: thought,
+    songTitle: noteType === 'song' ? songTitle : '',
+    songArtist: noteType === 'song' ? songArtist : ''
+  };
+
+  myNotes.unshift(note);
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(myNotes));
+  } catch (error) {
+    myNotes.shift();
+    alert('Could not save your note. Check your browser storage.');
+    return;
+  }
+
+  document.getElementById('note').value = '';
+  document.getElementById('songTitle').value = '';
+  document.getElementById('songArtist').value = '';
+  document.getElementById('charCount').textContent = '0/60 characters';
+
+  renderNotes();
+}
+
+function renderNotes() {
+  const savedNotes = document.getElementById('savedNotes');
+  const friendsRow = document.querySelector('.friends-notes');
+
+  savedNotes.replaceChildren();
+
+  if (myNotes.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'empty';
+    empty.textContent = 'Your notes will appear here after you post them.';
+    savedNotes.appendChild(empty);
+  }
+
+  myNotes.forEach(note => {
+    const card = document.createElement('div');
+    card.className = 'panel own-note';
+
+    const label = document.createElement('div');
+    label.className = 'muted';
+    label.textContent = 'YOUR NOTE';
+    card.appendChild(label);
+
+    if (note.thought) {
+      const thought = document.createElement('p');
+      thought.textContent = note.thought;
+      card.appendChild(thought);
+    }
+
+    if (note.type === 'song') {
+      const music = document.createElement('div');
+      music.className = 'note-music';
+
+      const icon = document.createElement('div');
+      icon.className = 'music-icon';
+      icon.textContent = '♫';
+
+      const info = document.createElement('div');
+      info.className = 'music-info';
+
+      const title = document.createElement('strong');
+      title.textContent = note.songTitle;
+
+      const artist = document.createElement('small');
+      artist.textContent = note.songArtist || 'Artist not specified';
+
+      info.append(title, artist);
+      music.append(icon, info);
+      card.appendChild(music);
+    }
+
+    savedNotes.appendChild(card);
+  });
+
+  // Remove previously rendered copies of your notes from the row.
+  friendsRow.querySelectorAll('[data-own-note]').forEach(el => el.remove());
+
+  // Add your saved notes to the start of the row.
+  [...myNotes].reverse().forEach(note => {
+    const friend = document.createElement('div');
+    friend.className = 'friend-note';
+    friend.dataset.ownNote = 'true';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'note-bubble';
+    bubble.textContent = note.type === 'song'
+      ? '♫ ' + note.songTitle
+      : note.thought;
+
+    const ring = document.createElement('div');
+    ring.className = 'ring';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.textContent = '🌙';
+
+    const name = document.createElement('span');
+    name.className = 'friend-name';
+    name.textContent = 'You';
+
+    ring.appendChild(avatar);
+    friend.append(bubble, ring, name);
+    friendsRow.prepend(friend);
+  });
+}
+
+loadNotes();
+
+
+</script>
+</body>
+</html>
